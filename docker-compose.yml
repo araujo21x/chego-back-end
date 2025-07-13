@@ -1,0 +1,67 @@
+services:
+  # --- Serviços de Banco de Dados PostgreSQL ---
+  users-db:
+    image: postgres:17.5
+    restart: always
+    environment:
+      POSTGRES_DB: users_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432" # Mapeia a porta do contêiner para a porta do host
+    volumes:
+      - users_data:/var/lib/postgresql/data # Volume persistente para dados
+    networks:
+      - chego-network
+
+  orders-db:
+    image: postgres:17.5
+    restart: always
+    environment:
+      POSTGRES_DB: orders_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432" # Porta diferente para evitar conflito com users-db
+    volumes:
+      - orders_data:/var/lib/postgresql/data
+    networks:
+      - chego-network
+
+  pricing-db:
+    image: postgres:17.5
+    restart: always
+    environment:
+      POSTGRES_DB: pricing_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5434:5432" # Porta diferente para evitar conflito
+    volumes:
+      - pricing_data:/var/lib/postgresql/data
+    networks:
+      - chego-network
+
+  # --- Serviço de Mensageria RabbitMQ ---
+  rabbitmq:
+    image: rabbitmq:3-management-alpine # Imagem com a interface de gerenciamento
+    restart: always
+    ports:
+      - "5672:5672" # Porta padrão para comunicação AMQP
+      - "15672:15672" # Porta para a interface de gerenciamento
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+    networks:
+      - chego-network
+
+# --- Volumes Persistentes ---
+volumes:
+  users_data:
+  orders_data:
+  pricing_data:
+
+# --- Redes ---
+networks:
+  chego-network:
+    driver: bridge

@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package pricing;
+
+service PricingService {
+  rpc GetPriceQuote (GetPriceQuoteRequest) returns (PriceQuoteResponse);
+}
+
+message GetPriceQuoteRequest {
+  double distance = 1;
+}
+
+message PriceQuoteResponse {
+  double distance = 1;
+  double price = 2;
+  string currency = 3;
+}

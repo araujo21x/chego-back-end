@@ -24,8 +24,11 @@ message LoginUserRequest {
 message UserResponse {
   string id = 1;
   string email = 2;
-  string name = 3;
-  string role = 4;
+  string password = 3;
+  string name = 4;
+  string lastName = 5;
+  string role = 6;
+  string status = 7;
 }
 
 message LoginResponse {

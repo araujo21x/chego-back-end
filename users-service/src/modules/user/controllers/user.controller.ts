@@ -1,8 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { CreateUserService } from '../services/create-user.service';
-import type { RegisterUserRequest, UserResponse } from '../../../../../proto/users.proto';
-import { CreateUserDto } from '../dtos/create-user.dto';
+import { RegisterUserRequest, UserResponse } from 'src/shared/proto/users';
 
 @Controller()
 export class UserController {
@@ -10,6 +9,6 @@ export class UserController {
 
   @GrpcMethod('UserService', 'RegisterUser')
   create(data: RegisterUserRequest): Promise<UserResponse> {
-    return this.createUserService.run(data as CreateUserDto);
+    return this.createUserService.run(data);
   }
 }

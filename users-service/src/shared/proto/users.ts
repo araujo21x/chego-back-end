@@ -24,18 +24,23 @@ export interface LoginUserRequest {
   password: string;
 }
 
-export interface UserResponse {
+export interface User {
   id: string;
   email: string;
-  password: string;
   name: string;
   lastName: string;
   role: string;
   status: string;
 }
 
+export interface UserResponse {
+  user: User | undefined;
+  message: string;
+}
+
 export interface LoginResponse {
-  accessToken: string;
+  token: string;
+  user: User | undefined;
 }
 
 export interface ValidateTokenRequest {
@@ -43,10 +48,9 @@ export interface ValidateTokenRequest {
 }
 
 export interface ValidateTokenResponse {
-  id: string;
-  email: string;
-  role: string;
   isValid: boolean;
+  user?: User | undefined;
+  message?: string | undefined;
 }
 
 export const USER_PACKAGE_NAME = "user";
@@ -180,20 +184,17 @@ export const LoginUserRequest: MessageFns<LoginUserRequest> = {
   },
 };
 
-function createBaseUserResponse(): UserResponse {
-  return { id: "", email: "", password: "", name: "", lastName: "", role: "", status: "" };
+function createBaseUser(): User {
+  return { id: "", email: "", name: "", lastName: "", role: "", status: "" };
 }
 
-export const UserResponse: MessageFns<UserResponse> = {
-  encode(message: UserResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+export const User: MessageFns<User> = {
+  encode(message: User, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.id !== "") {
       writer.uint32(10).string(message.id);
     }
     if (message.email !== "") {
       writer.uint32(18).string(message.email);
-    }
-    if (message.password !== "") {
-      writer.uint32(26).string(message.password);
     }
     if (message.name !== "") {
       writer.uint32(34).string(message.name);
@@ -210,10 +211,10 @@ export const UserResponse: MessageFns<UserResponse> = {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): UserResponse {
+  decode(input: BinaryReader | Uint8Array, length?: number): User {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseUserResponse();
+    const message = createBaseUser();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -231,14 +232,6 @@ export const UserResponse: MessageFns<UserResponse> = {
           }
 
           message.email = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.password = reader.string();
           continue;
         }
         case 4: {
@@ -283,14 +276,65 @@ export const UserResponse: MessageFns<UserResponse> = {
   },
 };
 
+function createBaseUserResponse(): UserResponse {
+  return { user: undefined, message: "" };
+}
+
+export const UserResponse: MessageFns<UserResponse> = {
+  encode(message: UserResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.user !== undefined) {
+      User.encode(message.user, writer.uint32(10).fork()).join();
+    }
+    if (message.message !== "") {
+      writer.uint32(18).string(message.message);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UserResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUserResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.user = User.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.message = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+};
+
 function createBaseLoginResponse(): LoginResponse {
-  return { accessToken: "" };
+  return { token: "", user: undefined };
 }
 
 export const LoginResponse: MessageFns<LoginResponse> = {
   encode(message: LoginResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.accessToken !== "") {
-      writer.uint32(10).string(message.accessToken);
+    if (message.token !== "") {
+      writer.uint32(10).string(message.token);
+    }
+    if (message.user !== undefined) {
+      User.encode(message.user, writer.uint32(18).fork()).join();
     }
     return writer;
   },
@@ -307,7 +351,15 @@ export const LoginResponse: MessageFns<LoginResponse> = {
             break;
           }
 
-          message.accessToken = reader.string();
+          message.token = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.user = User.decode(reader, reader.uint32());
           continue;
         }
       }
@@ -358,22 +410,19 @@ export const ValidateTokenRequest: MessageFns<ValidateTokenRequest> = {
 };
 
 function createBaseValidateTokenResponse(): ValidateTokenResponse {
-  return { id: "", email: "", role: "", isValid: false };
+  return { isValid: false };
 }
 
 export const ValidateTokenResponse: MessageFns<ValidateTokenResponse> = {
   encode(message: ValidateTokenResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    if (message.email !== "") {
-      writer.uint32(18).string(message.email);
-    }
-    if (message.role !== "") {
-      writer.uint32(26).string(message.role);
-    }
     if (message.isValid !== false) {
-      writer.uint32(32).bool(message.isValid);
+      writer.uint32(8).bool(message.isValid);
+    }
+    if (message.user !== undefined) {
+      User.encode(message.user, writer.uint32(18).fork()).join();
+    }
+    if (message.message !== undefined) {
+      writer.uint32(26).string(message.message);
     }
     return writer;
   },
@@ -386,11 +435,11 @@ export const ValidateTokenResponse: MessageFns<ValidateTokenResponse> = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1: {
-          if (tag !== 10) {
+          if (tag !== 8) {
             break;
           }
 
-          message.id = reader.string();
+          message.isValid = reader.bool();
           continue;
         }
         case 2: {
@@ -398,7 +447,7 @@ export const ValidateTokenResponse: MessageFns<ValidateTokenResponse> = {
             break;
           }
 
-          message.email = reader.string();
+          message.user = User.decode(reader, reader.uint32());
           continue;
         }
         case 3: {
@@ -406,15 +455,7 @@ export const ValidateTokenResponse: MessageFns<ValidateTokenResponse> = {
             break;
           }
 
-          message.role = reader.string();
-          continue;
-        }
-        case 4: {
-          if (tag !== 32) {
-            break;
-          }
-
-          message.isValid = reader.bool();
+          message.message = reader.string();
           continue;
         }
       }

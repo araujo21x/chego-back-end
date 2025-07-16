@@ -21,18 +21,23 @@ message LoginUserRequest {
   string password = 2;
 }
 
-message UserResponse {
+message User {
   string id = 1;
   string email = 2;
-  string password = 3;
   string name = 4;
   string lastName = 5;
   string role = 6;
   string status = 7;
 }
 
+message UserResponse {
+  User user = 1;
+  string message = 2;
+}
+
 message LoginResponse {
-  string accessToken = 1;
+  string token = 1;
+  User user = 2;
 }
 
 message ValidateTokenRequest {
@@ -40,8 +45,7 @@ message ValidateTokenRequest {
 }
 
 message ValidateTokenResponse {
-  string id = 1;
-  string email = 2;
-  string role = 3;
-  bool isValid = 4;
+  bool isValid = 1;
+  optional User user = 2;
+  optional string message = 3;
 }

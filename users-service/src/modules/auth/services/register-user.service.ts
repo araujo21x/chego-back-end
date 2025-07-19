@@ -1,8 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { RegisterUserRequest, User } from 'src/shared/proto/users';
 import { PrismaService } from 'src/database/prisma/prisma.service';
 import * as bcrypt from 'bcryptjs';
 import { UserRole } from '../../../../generated/prisma';
+import { throwAlreadyExists } from 'src/shared/exceptions/grpc-exception';
 
 @Injectable()
 export class RegisterUserService {
@@ -10,7 +11,7 @@ export class RegisterUserService {
 
   async run(body: RegisterUserRequest): Promise<User> {
     const user = await this.prisma.user.findUnique({ where: { email: body.email } });
-    if (user) throw new BadRequestException('User already exists');
+    if (user) throwAlreadyExists('User already exists');
 
     const registeredUser = await this.prisma.user.create({ data: await this.buildUser(body) });
     return registeredUser;

@@ -80,6 +80,7 @@ export class RpcErrorStrategy extends ErrorHandlingStrategy {
 
   public supports(error: any): boolean {
     if (error instanceof RpcException) return true;
+    if (error === null) return false;
 
     return 'code' in error && 'details' in error;
   }
@@ -108,7 +109,7 @@ export class RpcErrorStrategy extends ErrorHandlingStrategy {
   }
 
   private handlerObjectError(rpcError: GrpcErrorObject, path?: string): StandardErrorResponse {
-    const rpcCode = rpcError?.code || GrpcStatus.UNKNOWN;
+    const rpcCode = rpcError?.code || GrpcStatus.INVALID_ARGUMENT;
     const grpcMessage = String(rpcError?.details || rpcError?.message || 'An unknown gRPC error occurred.');
     console.log('aqui rpcError object');
     if (rpcCode in this.GRPC_STATUS_RESPONSE) {

@@ -1,13 +1,17 @@
 import { Injectable, CanActivate, ExecutionContext, UnauthorizedException, Inject } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
+import { GrpcCircuitBreakerWrapper } from 'src/shared/circuit-breakers/circuit-breaker.wrapper';
 import { User, UserServiceClient } from 'src/shared/proto/users';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
   private userGrpcService: UserServiceClient;
 
-  constructor(@Inject('USER_SERVICE') private readonly client: ClientGrpc) {}
+  constructor(
+    @Inject('USER_SERVICE') private readonly client: ClientGrpc,
+    @Inject('USER_SERVICE_VALIDATE_TOKEN_BREAKER') private readonly validateTokenBreaker: GrpcCircuitBreakerWrapper,
+  ) {}
 
   onModuleInit() {
     this.userGrpcService = this.client.getService<UserServiceClient>('UserService');
@@ -24,7 +28,9 @@ export class JwtAuthGuard implements CanActivate {
     const token = authHeader.split(' ')[1];
 
     try {
-      const { user, message, isValid } = await lastValueFrom(this.userGrpcService.validateToken({ token }));
+      const { user, message, isValid } = await lastValueFrom(
+        this.validateTokenBreaker.execute(this.userGrpcService.validateToken({ token })),
+      );
 
       if (!isValid) throw new UnauthorizedException(message);
       request.user = user;

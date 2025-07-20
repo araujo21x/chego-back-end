@@ -24,7 +24,7 @@ export class GrpcRetryInterceptor implements NestInterceptor {
 
           const delayTime = Math.pow(2, retryCount - 1) * 100;
           return new Observable((subscriber) => {
-            setTimeout(() => subscriber.next(delayTime), delayTime);
+            setTimeout(() => subscriber.complete(), delayTime);
           });
         },
       }),

@@ -1,0 +1,32 @@
+# monitoring/prometheus.yml
+global:
+  scrape_interval: 15s # Por padrão, coletar métricas a cada 15 segundos
+
+scrape_configs:
+  # Configuração para rodar via Docker Compose (serviços pelo nome do container)
+  - job_name: 'api-gateway'
+    static_configs:
+      - targets: ['api-gateway:9000'] # O nome do serviço no Docker Compose e a porta onde as métricas serão expostas
+
+  - job_name: 'users-service'
+    static_configs:
+      - targets: ['users-service:50051'] # O nome do serviço no Docker Compose e a porta gRPC (usaremos um exporter)
+
+  - job_name: 'pricing-service'
+    static_configs:
+      - targets: ['pricing-service:50052'] # O nome do serviço no Docker Compose e a porta gRPC (usaremos um exporter)
+
+  # Configuração para rodar localmente (serviços rodando na máquina local)
+  - job_name: 'api-gateway-local'
+    static_configs:
+      - targets: ['localhost:9000'] # Porta onde as métricas do api-gateway são expostas localmente
+
+  - job_name: 'users-service-local'
+    static_configs:
+      - targets: ['localhost:50051'] # Porta gRPC do users-service local
+
+  - job_name: 'pricing-service-local'
+    static_configs:
+      - targets: ['localhost:50052'] # Porta gRPC do pricing-service local
+
+  # Adicione mais jobs aqui conforme você adicionar mais microserviços

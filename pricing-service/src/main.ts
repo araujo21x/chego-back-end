@@ -8,7 +8,7 @@ async function bootstrap() {
     transport: Transport.GRPC,
     options: {
       package: 'pricing',
-      protoPath: join(__dirname, '..', '..', 'proto', 'pricing.proto'),
+      protoPath: join(__dirname, '..', 'proto', 'pricing.proto'),
       url: '0.0.0.0:50052',
       loader: {
         keepCase: true,
@@ -17,7 +17,7 @@ async function bootstrap() {
         defaults: true,
         arrays: true,
         objects: true,
-        includeDirs: [join(__dirname, '..', '..', 'proto')],
+        includeDirs: [join(__dirname, '..', 'proto')],
       },
     },
   };

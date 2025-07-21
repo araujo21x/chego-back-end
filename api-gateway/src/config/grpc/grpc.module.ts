@@ -10,7 +10,7 @@ import { join } from 'path';
         transport: Transport.GRPC,
         options: {
           package: 'user',
-          protoPath: join(__dirname, '../../../../proto/users.proto'),
+          protoPath: join(__dirname, '../../../proto/users.proto'),
           url: process.env.USER_SERVICE_URL || 'localhost:50051',
         },
       },
@@ -19,7 +19,7 @@ import { join } from 'path';
         transport: Transport.GRPC,
         options: {
           package: 'pricing',
-          protoPath: join(__dirname, '../../../../proto/pricing.proto'),
+          protoPath: join(__dirname, '../../../proto/pricing.proto'),
           url: process.env.PRICING_SERVICE_URL || 'localhost:50052',
         },
       },

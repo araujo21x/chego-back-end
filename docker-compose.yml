@@ -1,3 +1,6 @@
+# docker-compose.yml (na raiz do seu projeto)
+version: '3.8'
+
 services:
   # --- Serviços de Banco de Dados PostgreSQL ---
   users-db:
@@ -21,8 +24,9 @@ services:
       POSTGRES_DB: orders_db
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
+    # A porta 5433 no host aponta para a porta 5432 no container
     ports:
-      - "5433:5432" # Porta diferente para evitar conflito com users-db
+      - "5433:5432" 
     volumes:
       - orders_data:/var/lib/postgresql/data
     networks:
@@ -35,8 +39,9 @@ services:
       POSTGRES_DB: pricing_db
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
+    # A porta 5434 no host aponta para a porta 5432 no container
     ports:
-      - "5434:5432" # Porta diferente para evitar conflito
+      - "5434:5432" 
     volumes:
       - pricing_data:/var/lib/postgresql/data
     networks:
@@ -44,7 +49,7 @@ services:
 
   # --- Serviço de Mensageria RabbitMQ ---
   rabbitmq:
-    image: rabbitmq:3-management-alpine # Imagem com a interface de gerenciamento
+    image: rabbitmq:3-management-alpine
     restart: always
     ports:
       - "5672:5672" # Porta padrão para comunicação AMQP
@@ -55,11 +60,104 @@ services:
     networks:
       - chego-network
 
+  # --- Seus Serviços de Aplicação ---
+  api-gateway:
+    build:
+      context: . # Contexto na raiz do projeto para acessar o diretório proto
+      dockerfile: api-gateway/Dockerfile
+    ports:
+      - "9000:9000" # Porta principal do API Gateway e onde ele exporá métricas HTTP
+    environment:
+      NODE_ENV: development
+      USER_SERVICE_URL: users-service:50051 # Nome do serviço gRPC e porta interna do container
+      PRICING_SERVICE_URL: pricing-service:50052 # Nome do serviço gRPC e porta interna do container
+      JWT_SECRET: JWT_SECRETtestetete
+      PORT: 9000
+      RABBITMQ_URL: amqp://user:password@rabbitmq:5672
+    depends_on:
+      - users-service
+      - pricing-service
+      - rabbitmq # Depende do RabbitMQ se for usá-lo para comunicação
+    networks:
+      - chego-network
+
+  users-service:
+    build:
+      context: . # Contexto na raiz do projeto para acessar o diretório proto
+      dockerfile: users-service/Dockerfile
+    ports:
+      - "50051:50051" # Porta gRPC padrão do Users Service
+    environment:
+      # Use o nome do serviço 'users-db' e a porta interna do container (5432)
+      DATABASE_URL: postgresql://user:password@users-db:5432/users_db?schema=public
+      JWT_SECRET: JWT_SECRETtestetete # Certifique-se de definir esta variável de ambiente
+      # Certifique-se de que o Users Service consiga acessar o RabbitMQ
+      RABBITMQ_URL: amqp://user:password@rabbitmq:5672
+    depends_on:
+      - users-db
+      - rabbitmq
+    networks:
+      - chego-network
+
+  pricing-service:
+    build:
+      context: . # Contexto na raiz do projeto para acessar o diretório proto
+      dockerfile: pricing-service/Dockerfile
+    ports:
+      - "50052:50052" # Porta gRPC padrão do Pricing Service
+    environment:
+      # Use o nome do serviço 'pricing-db' e a porta interna do container (5432)
+      DATABASE_URL: postgresql://user:password@pricing-db:5432/pricing_db?schema=public
+      # Certifique-se de que o Pricing Service consiga acessar o RabbitMQ
+      RABBITMQ_URL: amqp://user:password@rabbitmq:5672
+    depends_on:
+      - pricing-db
+      - rabbitmq
+    networks:
+      - chego-network
+
+  # --- Serviços de Monitoramento ---
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090" # Porta da UI do Prometheus
+    volumes:
+      # Caminho relativo ao docker-compose.yml principal, para o arquivo prometheus.yml
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml 
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    restart: unless-stopped
+    depends_on:
+      - api-gateway # Prometeus precisa do API Gateway para coletar métricas HTTP
+      - users-service # Prometeus precisará dos microserviços (via exporters)
+      - pricing-service # Prometeus precisará dos microserviços (via exporters)
+    networks:
+      - chego-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000" # Porta da UI do Grafana
+    volumes:
+      - grafana_data:/var/lib/grafana # Persistência de dados do Grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin # ATENÇÃO: Mude esta senha em produção!
+    restart: unless-stopped
+    depends_on:
+      - prometheus # Grafana precisa do Prometheus como fonte de dados
+    networks:
+      - chego-network
+
 # --- Volumes Persistentes ---
 volumes:
   users_data:
   orders_data:
   pricing_data:
+  grafana_data: # Adicione o volume para persistência do Grafana
 
 # --- Redes ---
 networks:

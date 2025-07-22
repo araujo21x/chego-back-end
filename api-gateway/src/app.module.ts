@@ -9,9 +9,11 @@ import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { GrpcModule } from './config/grpc/grpc.module';
 import { HttpRpcExceptionFilter } from './shared/filter/http-rpc-exception.filter';
 import { ErrorModule } from './shared/error/error.module';
+import { MetricsModule } from './config/monitoring/metrics/metrics.module';
 
 @Module({
   imports: [
+    MetricsModule,
     ConfigModule.forRoot({ isGlobal: true }),
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 10 }]),
     ErrorModule,

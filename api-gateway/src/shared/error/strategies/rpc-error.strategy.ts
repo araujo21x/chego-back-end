@@ -100,7 +100,7 @@ export class RpcErrorStrategy extends ErrorHandlingStrategy {
     };
 
     const rpcError = error.getError?.() || error || null;
-    console.log('aqui rpcError');
+
     if (rpcError === null) return defaultError;
     if (typeof rpcError === 'object') return this.handlerObjectError(rpcError);
     if (typeof rpcError === 'string') return this.handleStringError(rpcError);
@@ -111,7 +111,7 @@ export class RpcErrorStrategy extends ErrorHandlingStrategy {
   private handlerObjectError(rpcError: GrpcErrorObject, path?: string): StandardErrorResponse {
     const rpcCode = rpcError?.code || GrpcStatus.INVALID_ARGUMENT;
     const grpcMessage = String(rpcError?.details || rpcError?.message || 'An unknown gRPC error occurred.');
-    console.log('aqui rpcError object');
+
     if (rpcCode in this.GRPC_STATUS_RESPONSE) {
       return this.GRPC_STATUS_RESPONSE[rpcCode as keyof typeof this.GRPC_STATUS_RESPONSE](grpcMessage, { path: path });
     }
@@ -120,7 +120,6 @@ export class RpcErrorStrategy extends ErrorHandlingStrategy {
   }
 
   private handleStringError(rpcError: string, path?: string): StandardErrorResponse {
-    console.log('aqui rpcError string');
     return {
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       message: `gRPC Error: ${rpcError}`,

@@ -1,4 +1,3 @@
-# docker-compose.yml (na raiz do seu projeto)
 version: '3.8'
 
 services:
@@ -11,9 +10,9 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
     ports:
-      - "5432:5432" # Mapeia a porta do contêiner para a porta do host
+      - "5432:5432"
     volumes:
-      - users_data:/var/lib/postgresql/data # Volume persistente para dados
+      - users_data:/var/lib/postgresql/data
     networks:
       - chego-network
 
@@ -24,7 +23,6 @@ services:
       POSTGRES_DB: orders_db
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
-    # A porta 5433 no host aponta para a porta 5432 no container
     ports:
       - "5433:5432" 
     volumes:
@@ -39,7 +37,6 @@ services:
       POSTGRES_DB: pricing_db
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
-    # A porta 5434 no host aponta para a porta 5432 no container
     ports:
       - "5434:5432" 
     volumes:
@@ -52,8 +49,8 @@ services:
     image: rabbitmq:3-management-alpine
     restart: always
     ports:
-      - "5672:5672" # Porta padrão para comunicação AMQP
-      - "15672:15672" # Porta para a interface de gerenciamento
+      - "5672:5672"
+      - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: user
       RABBITMQ_DEFAULT_PASS: password
@@ -63,21 +60,23 @@ services:
   # --- Seus Serviços de Aplicação ---
   api-gateway:
     build:
-      context: . # Contexto na raiz do projeto para acessar o diretório proto
+      context: .
       dockerfile: api-gateway/Dockerfile
     ports:
-      - "9000:9000" # Porta principal do API Gateway e onde ele exporá métricas HTTP
+      - "9000:9000"
     environment:
       NODE_ENV: development
-      USER_SERVICE_URL: users-service:50051 # Nome do serviço gRPC e porta interna do container
-      PRICING_SERVICE_URL: pricing-service:50052 # Nome do serviço gRPC e porta interna do container
+      USER_SERVICE_URL: users-service:50051
+      PRICING_SERVICE_URL: pricing-service:50052
+      ORDER_SERVICE_URL: order-service:50053
       JWT_SECRET: JWT_SECRETtestetete
       PORT: 9000
       RABBITMQ_URL: amqp://user:password@rabbitmq:5672
     depends_on:
+      - order-service
       - users-service
       - pricing-service
-      - rabbitmq # Depende do RabbitMQ se for usá-lo para comunicação
+      - rabbitmq
     networks:
       - chego-network
 
@@ -87,12 +86,12 @@ services:
       dockerfile: users-service/Dockerfile
     ports:
       - "50051:50051" # Porta gRPC padrão do Users Service
+      - "9001:9001" # Porta HTTP padrão do Users Service
     environment:
-      # Use o nome do serviço 'users-db' e a porta interna do container (5432)
       DATABASE_URL: postgresql://user:password@users-db:5432/users_db?schema=public
-      JWT_SECRET: JWT_SECRETtestetete # Certifique-se de definir esta variável de ambiente
-      # Certifique-se de que o Users Service consiga acessar o RabbitMQ
+      JWT_SECRET: JWT_SECRETtestetete
       RABBITMQ_URL: amqp://user:password@rabbitmq:5672
+      METRICS_PORT: 9001
     depends_on:
       - users-db
       - rabbitmq
@@ -101,16 +100,36 @@ services:
 
   pricing-service:
     build:
-      context: . # Contexto na raiz do projeto para acessar o diretório proto
+      context: .
       dockerfile: pricing-service/Dockerfile
     ports:
-      - "50052:50052" # Porta gRPC padrão do Pricing Service
+      - "50052:50052"
+      - "9002:9002"
     environment:
-      # Use o nome do serviço 'pricing-db' e a porta interna do container (5432)
       DATABASE_URL: postgresql://user:password@pricing-db:5432/pricing_db?schema=public
-      # Certifique-se de que o Pricing Service consiga acessar o RabbitMQ
       RABBITMQ_URL: amqp://user:password@rabbitmq:5672
+      METRICS_PORT: 9002
     depends_on:
+      - pricing-db
+      - rabbitmq
+    networks:
+      - chego-network
+
+  order-service:
+    build:
+      context: .
+      dockerfile: order-service/Dockerfile
+    ports:
+      - "50053:50053"
+      - "9003:9003"
+    environment:
+      DATABASE_URL: postgresql://user:password@orders-db:5432/orders_db?schema=public
+      RABBITMQ_URL: amqp://user:password@rabbitmq:5672
+      METRICS_PORT: 9003
+      # USERS_SERVICE_GRPC_URL: users-service:50051
+      # PRICING_SERVICE_GRPC_URL: pricing-service:50052
+    depends_on:
+      - users-db
       - pricing-db
       - rabbitmq
     networks:
@@ -140,15 +159,15 @@ services:
     image: grafana/grafana:latest
     container_name: grafana
     ports:
-      - "3000:3000" # Porta da UI do Grafana
+      - "3000:3000"
     volumes:
-      - grafana_data:/var/lib/grafana # Persistência de dados do Grafana
+      - grafana_data:/var/lib/grafana
     environment:
       GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: admin # ATENÇÃO: Mude esta senha em produção!
+      GF_SECURITY_ADMIN_PASSWORD: admin
     restart: unless-stopped
     depends_on:
-      - prometheus # Grafana precisa do Prometheus como fonte de dados
+      - prometheus
     networks:
       - chego-network
 

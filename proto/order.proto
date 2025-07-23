@@ -4,6 +4,7 @@ package order;
 
 service OrderService {
   rpc RegisterOrder (RegisterOrderRequest) returns (OrderResponse);
+  rpc CancelOrder (CancelOrderRequest) returns (CancelOrderResponse);
 }
 
 message RegisterOrderRequestAddress {
@@ -27,6 +28,15 @@ message RegisterOrderRequest {
 }
 
 message OrderResponse {
+  string message = 1;
+  Order order = 2;
+}
+
+message CancelOrderRequest {
+  string orderId = 1;
+}
+
+message CancelOrderResponse {
   string message = 1;
   Order order = 2;
 }

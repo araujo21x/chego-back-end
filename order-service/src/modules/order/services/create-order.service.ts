@@ -2,6 +2,7 @@ import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
 import { OrderStatus, PaymentMethod } from 'generated/prisma';
 import { firstValueFrom } from 'rxjs';
+import { RmqService } from 'src/config/rabbitMQ/rmq.service';
 import { PrismaService } from 'src/database/prisma/prisma.service';
 import convertNullToUndefined from 'src/shared/helpers/convertNullToUndefined';
 import { Order, OrderResponse, RegisterOrderRequest, RegisterOrderRequestAddress } from 'src/shared/proto/order';
@@ -23,6 +24,7 @@ export class CreateOrderService implements OnModuleInit {
     @Inject('USER_SERVICE') private readonly userClientGrpc: ClientGrpc,
     @Inject('PRICING_SERVICE') private readonly pricingClientGrpc: ClientGrpc,
     private readonly prismaService: PrismaService,
+    private readonly rmqService: RmqService,
   ) {}
 
   onModuleInit() {
@@ -30,7 +32,7 @@ export class CreateOrderService implements OnModuleInit {
     this.pricingServiceGrpc = this.pricingClientGrpc.getService<PricingServiceClient>('PricingService');
   }
 
-  async createOrder(body: RegisterOrderRequest): Promise<OrderResponse> {
+  async run(body: RegisterOrderRequest): Promise<OrderResponse> {
     try {
       const { user } = await firstValueFrom(this.userServiceGrpc.getUser({ userId: body.userId }));
       if (!user) throw new Error('User not found');
@@ -40,9 +42,8 @@ export class CreateOrderService implements OnModuleInit {
 
       const order = await this.prismaService.order.create({ data: this.buildOrder({ body, user, pricingResponse }) });
 
-      // 3. Publicar evento (Assíncrono via RabbitMQ - será na próxima seção)
-      // this.rmqClient.emit('order_created', newOrder);
-      // console.log('OrderCreated event emitted (RabbitMQ).');
+      this.rmqService.emit('order_created_for_acceptance', order);
+      // this.rmqService.emit('order_created_for_notification', user);
 
       return { message: 'Order created and pending acceptance!', order: convertNullToUndefined<Order>(order) };
     } catch (error: unknown) {

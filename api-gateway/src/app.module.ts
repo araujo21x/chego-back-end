@@ -10,6 +10,7 @@ import { GrpcModule } from './config/grpc/grpc.module';
 import { HttpRpcExceptionFilter } from './shared/filter/http-rpc-exception.filter';
 import { ErrorModule } from './shared/error/error.module';
 import { MetricsModule } from './config/monitoring/metrics/metrics.module';
+import { OrderModule } from './modules/order/order.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { MetricsModule } from './config/monitoring/metrics/metrics.module';
     GrpcModule,
     AuthModule,
     PricingGatewayModule,
+    OrderModule,
   ],
   controllers: [AppController],
   providers: [

@@ -23,6 +23,15 @@ import { join } from 'path';
           url: process.env.PRICING_SERVICE_URL || 'localhost:50052',
         },
       },
+      {
+        name: 'ORDER_SERVICE',
+        transport: Transport.GRPC,
+        options: {
+          package: 'order',
+          protoPath: join(__dirname, '../../../proto/order.proto'),
+          url: process.env.ORDER_SERVICE_URL || 'localhost:50053',
+        },
+      },
     ]),
   ],
   exports: [ClientsModule],

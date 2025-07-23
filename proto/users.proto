@@ -6,6 +6,7 @@ service UserService {
   rpc RegisterUser (RegisterUserRequest) returns (UserResponse);
   rpc LoginUser (LoginUserRequest) returns (LoginResponse);
   rpc ValidateToken (ValidateTokenRequest) returns (ValidateTokenResponse);
+  rpc GetUser (GetUserRequest) returns (GetUserResponse);
 }
 
 message RegisterUserRequest {
@@ -48,4 +49,12 @@ message ValidateTokenResponse {
   bool isValid = 1;
   optional User user = 2;
   optional string message = 3;
+}
+
+message GetUserRequest {
+  optional string userId = 1;
+}
+
+message GetUserResponse {
+  User user = 1;
 }

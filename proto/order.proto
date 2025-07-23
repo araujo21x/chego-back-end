@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package order;
+
+service OrderService {
+  rpc RegisterOrder (RegisterOrderRequest) returns (OrderResponse);
+}
+
+message RegisterOrderRequestAddress {
+  string address = 1;
+  string neighborhood = 2;
+  string number = 3;
+  string complement = 4;
+  string city = 5;
+  string state = 6;
+  string zipCode = 7;
+  double latitude = 8;
+  double longitude = 9;
+}
+
+message RegisterOrderRequest {
+  string userId = 1;
+  double distance = 2;
+  optional string comment = 3;
+  optional string paymentMethod = 4;
+  RegisterOrderRequestAddress address = 5;
+}
+
+message OrderResponse {
+  string message = 1;
+  Order order = 2;
+}
+
+message Address {
+  string id = 1;
+  string orderId = 2;
+  string address = 3;
+  string neighborhood = 4;
+  string number = 5;
+  string complement = 6;
+  string city = 7;
+  string state = 8;
+  string zipCode = 9;
+  double latitude = 10;
+  double longitude = 11;
+  string createdAt = 12;
+  string updatedAt = 13;
+}
+
+message Order {
+  string id = 1;
+  string userId = 2;
+  string userName = 3;
+  optional string userLastName = 4;
+  optional string userImage = 5;
+  optional string deliverymanId = 6;
+  optional string deliverymanName = 7;
+  optional string deliverymanLastName = 8;
+  optional string deliverymanImage = 9;
+  optional string comment = 10;
+  double value = 11;
+  optional double discount = 12;
+  optional double tax = 13;
+  double total = 14;
+  string status = 15;
+  string paymentMethod = 16;
+  string createdAt = 17;
+  string updatedAt = 18;
+  Address address = 19;
+}

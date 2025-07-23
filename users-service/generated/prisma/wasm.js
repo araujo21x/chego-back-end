@@ -132,6 +132,22 @@ exports.Prisma.UserScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.AddressScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  address: 'address',
+  neighborhood: 'neighborhood',
+  number: 'number',
+  complement: 'complement',
+  city: 'city',
+  state: 'state',
+  zipCode: 'zipCode',
+  latitude: 'latitude',
+  longitude: 'longitude',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -153,7 +169,8 @@ exports.UserStatus = exports.$Enums.UserStatus = {
 };
 
 exports.Prisma.ModelName = {
-  User: 'User'
+  User: 'User',
+  Address: 'Address'
 };
 
 /**

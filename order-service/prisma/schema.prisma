@@ -1,0 +1,71 @@
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../generated/prisma"
+  binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderStatus {
+  pending
+  in_progress
+  completed
+  cancelled
+}
+
+enum PaymentMethod {
+  credit_card
+  debit_card
+  pix
+  cash
+}
+
+model Order {
+  id                  String        @id @default(uuid()) @map("_id") @db.Uuid
+  userId              String        @map("user_id") @db.Uuid
+  userName            String?       @map("user_name")
+  userLastName        String?       @map("user_last_name")
+  userImage           String?       @map("user_image")
+  deliverymanId       String?       @map("deliveryman_id") @db.Uuid
+  deliverymanName     String?       @map("deliveryman_name")
+  deliverymanLastName String?       @map("deliveryman_last_name")
+  deliverymanImage    String?       @map("deliveryman_image")
+  comment             String?
+  value               Float         @default(0)
+  discount            Float         @default(0)
+  tax                 Float         @default(0)
+  total               Float         @default(0)
+  status              OrderStatus   @default(pending)
+  paymentMethod       PaymentMethod @default(credit_card)
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
+
+  address Address?
+
+  @@index([userId])
+  @@index([deliverymanId])
+  @@index([status])
+  @@map("orders")
+}
+
+model Address {
+  id           String   @id @default(uuid()) @map("_id") @db.Uuid
+  orderId      String   @unique @map("order_id") @db.Uuid
+  order        Order    @relation(fields: [orderId], references: [id])
+  address      String
+  neighborhood String
+  number       String   @default("N/A")
+  complement   String
+  city         String
+  state        String
+  zipCode      String
+  latitude     Decimal
+  longitude    Decimal
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("addresses")
+}

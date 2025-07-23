@@ -1,6 +1,7 @@
 generator client {
-  provider = "prisma-client-js"
-  output   = "../generated/prisma"
+  provider      = "prisma-client-js"
+  output        = "../generated/prisma"
+  binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
 }
 
 datasource db {
@@ -24,13 +25,33 @@ model User {
   email     String     @unique
   password  String
   name      String
-  lastName  String
+  lastName  String     @map("last_name")
   role      UserRole   @default(client)
   status    UserStatus @default(active)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  addresses Address[]
 
   @@index([role])
   @@index([status])
   @@map("users")
+}
+
+model Address {
+  id           String   @id @default(uuid()) @map("_id") @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  user         User     @relation(fields: [userId], references: [id])
+  address      String
+  neighborhood String
+  number       String   @default("N/A")
+  complement   String
+  city         String
+  state        String
+  zipCode      String
+  latitude     Decimal
+  longitude    Decimal
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("addresses")
 }

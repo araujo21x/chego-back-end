@@ -2,6 +2,7 @@ import { Controller, Get, Logger, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { MetricsService } from '../services/metrics.service';
 import { PrismaService } from 'src/database/prisma/prisma.service';
+import { RmqService } from 'src/config/rabbitMQ/rmq.service';
 
 @Controller()
 export class MetricsController {
@@ -10,6 +11,7 @@ export class MetricsController {
   constructor(
     private readonly metricsService: MetricsService,
     private readonly prismaService: PrismaService,
+    private readonly rmqService: RmqService,
   ) {}
 
   @Get('/metrics')
@@ -23,6 +25,7 @@ export class MetricsController {
   async getHealth(@Res() res: Response) {
     try {
       await this.prismaService.$queryRaw`SELECT 1`;
+      await this.rmqService.ping();
       res.status(200).send('OK');
     } catch (error) {
       Logger.error('Health check failed:', error);

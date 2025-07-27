@@ -10,8 +10,8 @@ import { RmqService } from './rmq.service';
         name: 'RABBITMQ_EVENT_BUS',
         transport: Transport.RMQ,
         options: {
-          urls: ['amqp://user:password@localhost:5672'],
-          queue: 'order_events_queue',
+          urls: [process.env.RABBITMQ_URL || 'amqp://user:password@localhost:5672'],
+          queue: process.env.RABBITMQ_QUEUE || 'order_events_queue',
           queueOptions: {
             durable: true,
           },

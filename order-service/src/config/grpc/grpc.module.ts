@@ -4,6 +4,7 @@ import { join } from 'path';
 
 @Module({
   imports: [
+    GrpcModule,
     ClientsModule.register([
       {
         name: 'USER_SERVICE',

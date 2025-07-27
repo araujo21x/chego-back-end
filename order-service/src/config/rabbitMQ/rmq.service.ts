@@ -16,6 +16,10 @@ export class RmqService {
     this.client.emit(pattern, data);
   }
 
+  async ping(): Promise<void> {
+    return await firstValueFrom(this.client.emit('ping', 'ping'));
+  }
+
   async send<TResult = any, TInput = any>(pattern: string, data: TInput): Promise<TResult> {
     return await firstValueFrom(this.client.send(pattern, data));
   }
